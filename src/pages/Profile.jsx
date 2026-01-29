@@ -20,6 +20,9 @@ export default function Profile() {
     const [loading, setLoading] = useState(false)
     const [saved, setSaved] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [deletePassword, setDeletePassword] = useState('')
+    const [deleteError, setDeleteError] = useState('')
+    const [deleting, setDeleting] = useState(false)
     const [formData, setFormData] = useState({
         full_name: '',
         date_of_birth: '',
@@ -61,10 +64,19 @@ export default function Profile() {
     }
 
     const handleDeleteAccount = async () => {
+        if (!deletePassword && !isGuest) {
+            setDeleteError('Vui lòng nhập mật khẩu')
+            return
+        }
+
+        setDeleting(true)
+        setDeleteError('')
+
         try {
-            await deleteAccount()
+            await deleteAccount(deletePassword)
         } catch (error) {
-            console.error('Error deleting account:', error)
+            setDeleteError(error.message || 'Có lỗi xảy ra')
+            setDeleting(false)
         }
     }
 
@@ -349,21 +361,59 @@ export default function Profile() {
                                 <Trash2 className="w-8 h-8 text-danger-400" />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">Xóa tài khoản?</h3>
-                            <p className="text-dark-400 mb-6">
+                            <p className="text-dark-400 mb-4">
                                 Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.
                             </p>
+
+                            {!isGuest && (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-dark-300 mb-2 text-left">
+                                        Nhập mật khẩu để xác nhận
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={deletePassword}
+                                        onChange={(e) => {
+                                            setDeletePassword(e.target.value)
+                                            setDeleteError('')
+                                        }}
+                                        className="input-field w-full"
+                                        placeholder="Nhập mật khẩu của bạn"
+                                    />
+                                </div>
+                            )}
+
+                            {deleteError && (
+                                <div className="mb-4 p-3 bg-danger-500/20 border border-danger-500/30 rounded-xl">
+                                    <p className="text-danger-400 text-sm">{deleteError}</p>
+                                </div>
+                            )}
+
                             <div className="flex gap-3">
                                 <button
-                                    onClick={() => setShowDeleteModal(false)}
+                                    onClick={() => {
+                                        setShowDeleteModal(false)
+                                        setDeletePassword('')
+                                        setDeleteError('')
+                                    }}
+                                    disabled={deleting}
                                     className="btn-secondary flex-1"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     onClick={handleDeleteAccount}
-                                    className="btn-danger flex-1"
+                                    disabled={deleting}
+                                    className="btn-danger flex-1 flex items-center justify-center gap-2"
                                 >
-                                    Xóa vĩnh viễn
+                                    {deleting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Đang xóa...
+                                        </>
+                                    ) : (
+                                        'Xóa vĩnh viễn'
+                                    )}
                                 </button>
                             </div>
                         </div>

@@ -139,12 +139,22 @@ export const AuthProvider = ({ children }) => {
         })
     }
 
-    const deleteAccount = async () => {
+    const deleteAccount = async (password) => {
         if (isGuest) {
             localStorage.removeItem('healthguard_guest_mode')
             localStorage.removeItem('healthguard_guest_data')
             setIsGuest(false)
             return
+        }
+
+        // Verify password first
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+            email: user.email,
+            password: password
+        })
+
+        if (verifyError) {
+            throw new Error('Mật khẩu không đúng')
         }
 
         // Delete all user data first
